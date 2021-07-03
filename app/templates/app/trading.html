@@ -1,0 +1,16 @@
+<div class="container">
+
+    <h2> IT'S TIME TO TRADE {{user}} </h2>
+
+    <form method="POST">
+      <fieldset>
+        {% csrf_token %}
+
+        {{ form.as_p }}
+          <button type="submit" class="btn btn-primary">Place Order</button>
+      </fieldset>
+
+    </form>
+
+
+</div>

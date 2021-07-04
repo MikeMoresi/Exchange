@@ -76,19 +76,22 @@ class Trading(generic.CreateView):
             # select a buy order with a price greater than or equal to the sell order
             buyOrder = collectionOrder.find_one({'profile_id':{'$eq':current_user.id},'action':'buy', 'done':'False'})
             sellOrder = collectionOrder.find_one({'action': 'sell', 'done': 'False', 'price': {'$lte': buyOrder['price']}})
-            # change from false to true order status
-            orderDone = {'$set': {'done': 'True'}}
-            collectionOrder.update_one(buyOrder, orderDone)
-            collectionOrder.update_one(sellOrder, orderDone)
-            # modify numbers of BTC
-            buyer = collectionProfile.find_one({'user_id': {'$eq': buyOrder['profile_id']}})
-            # the are no fees transaction
-            fees = 0
-            newNBTC = {'$inc': {'nBTC': buyer['quantity']-fees}}
-            collectionProfile.update_one(buyer, newNBTC)
-            # modify profit-loss field
-            newProfit = {'$inc': {'profitLoss': -(buyer['price'])}}
-            collectionProfile.update_one(buyer, newProfit)
+            if sellOrder is not None:
+                # change from false to true order status
+                orderDone = {'$set': {'done': 'True'}}
+                collectionOrder.update_one(buyOrder, orderDone)
+                collectionOrder.update_one(sellOrder, orderDone)
+                # modify numbers of BTC
+                buyer = collectionProfile.find_one({'user_id': {'$eq': buyOrder['profile_id']}})
+                # the are no fees transaction
+                fees = 0
+                newNBTC = {'$inc': {'nBTC': buyer['quantity']-fees}}
+                collectionProfile.update_one(buyer, newNBTC)
+                # modify profit-loss field
+                newProfit = {'$inc': {'profitLoss': -(buyer['price'])}}
+                collectionProfile.update_one(buyer, newProfit)
+            else:
+                JsonResponse('There is no sell order to satisfy your request. Retry later', safe=False)
 
         else:
             JsonResponse('There is no sell order to satisfy your request. Retry later',safe=False)
@@ -115,19 +118,23 @@ class Trading(generic.CreateView):
             # select a sell order with a price less than or equal to the buy order
             sellOrder = collectionOrder.find_one({'profile_id': {'$eq': current_user.id}, 'action': 'sell', 'done': 'False'})
             buyOrder = collectionOrder.find_one({'action': 'buy', 'done': 'False', 'price': {'$gte': sellOrder['price']}})
-            orderDone = {'$set': {'done': 'True'}}
-            # change from false to true order status
-            collectionOrder.update_one(buyOrder, orderDone)
-            collectionOrder.update_one(sellOrder, orderDone)
-            # modify numbers of BTC
-            seller = collectionProfile.find_one({'user_id': {'$eq': sellOrder['profile_id']}})
-            # the are no fees transaction
-            fees = 0
-            newNBTC = {'$inc': {'nBTC': -((seller['quantity'])-fees)}}
-            collectionProfile.update_one(seller, newNBTC)
-            # modify profit-loss field
-            newProfit = {'$inc': {'profitLoss': seller['price']}}
-            collectionProfile.update_one(seller, newProfit)
+            if buyOrder is not None:
+                # change from false to true order status
+                orderDone = {'$set': {'done': 'True'}}
+                collectionOrder.update_one(buyOrder, orderDone)
+                collectionOrder.update_one(sellOrder, orderDone)
+                # modify numbers of BTC
+                seller = collectionProfile.find_one({'user_id': {'$eq': sellOrder['profile_id']}})
+                # the are no fees transaction
+                fees = 0
+                newNBTC = {'$inc': {'nBTC': -((seller['quantity'])-fees)}}
+                collectionProfile.update_one(seller, newNBTC)
+                # modify profit-loss field
+                newProfit = {'$inc': {'profitLoss': seller['price']}}
+                collectionProfile.update_one(seller, newProfit)
+            else:
+                JsonResponse('There is no buy order to satisfy your request. Retry later', safe=False)
+
 
         else:
             JsonResponse('There is no buy order to satisfy your request. Retry later',safe=False)

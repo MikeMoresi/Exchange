@@ -74,8 +74,8 @@ class Trading(generic.CreateView):
         if (docSell != 0):
 
             # select a buy order with a price greater than or equal to the sell order
-            sellOrder = collectionOrder.find_one({'action': 'sell', 'done': 'False'})
-            buyOrder = collectionOrder.find_one({'profile_id':{'$eq':current_user.id},'action': 'buy', 'done': 'False', 'price': {'$gte': sellOrder['price']}})
+            buyOrder = collectionOrder.find_one({'profile_id':{'$eq':current_user.id},'action':'buy', 'done':'False'})
+            sellOrder = collectionOrder.find_one({'action': 'sell', 'done': 'False', 'price': {'$lte': buyOrder['price']}})
             # change from false to true order status
             orderDone = {'$set': {'done': 'True'}}
             collectionOrder.update_one(buyOrder, orderDone)
@@ -113,8 +113,8 @@ class Trading(generic.CreateView):
         if (docBuy != 0):
 
             # select a sell order with a price less than or equal to the buy order
-            sellOrder = collectionOrder.find_one({'action': 'buy', 'done': 'False'})
-            buyOrder = collectionOrder.find_one({'profile_id': {'$eq': current_user.id}, 'action': 'sell', 'done': 'False','price': {'$lte': sellOrder['price']}})
+            sellOrder = collectionOrder.find_one({'profile_id': {'$eq': current_user.id}, 'action': 'sell', 'done': 'False'})
+            buyOrder = collectionOrder.find_one({'action': 'buy', 'done': 'False', 'price': {'$gte': sellOrder['price']}})
             orderDone = {'$set': {'done': 'True'}}
             # change from false to true order status
             collectionOrder.update_one(buyOrder, orderDone)

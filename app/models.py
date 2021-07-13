@@ -73,7 +73,7 @@ class Order(models.Model):
         else:
             # SELL ORDER
             # check if there are or no GTE Buy Orders from other accounts
-            buyOrders = Order.objects.filter((~Q(profile_id=self.profile)), done='False', action='buy',price__gte=self.price).order_by('price')
+            buyOrders = Order.objects.filter((~Q(profile_id=self.profile)), done='False', action='buy',price__gte=self.price).order_by('-price')
             if not buyOrders:
                 return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
             else:

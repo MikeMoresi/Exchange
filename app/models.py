@@ -34,38 +34,74 @@ class Order(models.Model):
 
     def checkOrders(self):
 
-        #BUY ORDER
 
-        #check if there are or no LTE Sell Orders from other accounts
-        sellOrders = Order.objects.filter((~Q(profile_id=self.profile)),done='False',action='sell',price__lte = self.price).order_by('price')
-        if not sellOrders:
-            return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
+
+        userActionOrder = self.action
+        if userActionOrder == 'Buy':
+            # BUY ORDER
+            #check if there are or no LTE Sell Orders from other accounts
+            sellOrders = Order.objects.filter((~Q(profile_id=self.profile)),done='False',action='sell',price__lte = self.price).order_by('price')
+            if not sellOrders:
+                return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
+            else:
+                #find the cheapest sell open order
+                cheapSellOrder = sellOrders[0]
+                print(cheapSellOrder)
+
+                #change order status from False to True
+                cheapSellOrder.done = 'True'
+                cheapSellOrder.save(update_fields=['done'])
+                self.done = 'True'
+
+                #modify account's Profile fields
+                #nBTC
+                cheapSellOrder.profile.nBTC -= cheapSellOrder.quantity
+                cheapSellOrder.profile.save(update_fields=['nBTC'])
+                self.profile.nBTC += self.quantity
+                self.profile.save(update_fields=['nBTC'])
+                #wallet
+                cheapSellOrder.profile.wallet = cheapSellOrder.profile.nBTC*btcValue()
+                cheapSellOrder.profile.save(update_fields=['wallet'])
+                self.profile.wallet = self.profile.nBTC*btcValue()
+                self.profile.save(update_fields=['wallet'])
+                #profitLoss
+                cheapSellOrder.profile.profitLoss += cheapSellOrder.price
+                cheapSellOrder.profile.save(update_fields=['profitLoss'])
+                self.profile.profitLoss -= self.price
+                self.profile.save(update_fields=['profitLoss'])
+
         else:
-            #find the cheapest sell open order
-            cheapSellOrder = sellOrders[0]
-            print(cheapSellOrder)
+            # SELL ORDER
+            # check if there are or no GTE Buy Orders from other accounts
+            buyOrders = Order.objects.filter((~Q(profile_id=self.profile)), done='False', action='buy',price__gte=self.price).order_by('price')
+            if not buyOrders:
+                return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
+            else:
+                # find the suitable buy open order
+                suitBuyOrder = buyOrders[0]
+                print(suitBuyOrder)
 
-            #change order status from False to True
-            cheapSellOrder.done = 'True'
-            cheapSellOrder.save(update_fields=['done'])
-            self.done = 'True'
+                # change order status from False to True
+                suitBuyOrder.done = 'True'
+                suitBuyOrder.save(update_fields=['done'])
+                self.done = 'True'
 
-            #modify account's Profile fields
-            #nBTC
-            cheapSellOrder.profile.nBTC -= cheapSellOrder.quantity
-            cheapSellOrder.profile.save(update_fields=['nBTC'])
-            self.profile.nBTC += self.quantity
-            self.profile.save(update_fields=['nBTC'])
-            #wallet
-            cheapSellOrder.profile.wallet = cheapSellOrder.profile.nBTC*btcValue()
-            cheapSellOrder.profile.save(update_fields=['wallet'])
-            self.profile.wallet = self.profile.nBTC*btcValue()
-            self.profile.save(update_fields=['wallet'])
-            #profitLoss
-            cheapSellOrder.profile.profitLoss += cheapSellOrder.price
-            cheapSellOrder.profile.save(update_fields=['profitLoss'])
-            self.profile.profitLoss -= self.price
-            self.profile.save(update_fields=['profitLoss'])
+                # modify account's Profile fields
+                # nBTC
+                suitBuyOrder.profile.nBTC += suitBuyOrder.quantity
+                suitBuyOrder.profile.save(update_fields=['nBTC'])
+                self.profile.nBTC -= self.quantity
+                self.profile.save(update_fields=['nBTC'])
+                # wallet
+                suitBuyOrder.profile.wallet = suitBuyOrder.profile.nBTC * btcValue()
+                suitBuyOrder.profile.save(update_fields=['wallet'])
+                self.profile.wallet = self.profile.nBTC * btcValue()
+                self.profile.save(update_fields=['wallet'])
+                # profitLoss
+                suitBuyOrder.profile.profitLoss -= suitBuyOrder.price
+                suitBuyOrder.profile.save(update_fields=['profitLoss'])
+                self.profile.profitLoss += self.price
+                self.profile.save(update_fields=['profitLoss'])
 
 
 

@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'exchange.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'engine',
+        'NAME': 'newengine',
     }
 }
 
@@ -127,5 +127,5 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-LOGIN_REDIRECT_URL = '/trading'
+LOGIN_REDIRECT_URL = '/placeOrders'
 

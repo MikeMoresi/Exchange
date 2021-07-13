@@ -11,7 +11,7 @@ class Crypto_report:
         }
         self.headers = {
             'Accepts': 'application/json',
-            'X-CMC_PRO_API_KEY': 'MY-KEY',
+            'X-CMC_PRO_API_KEY': '6f172a84-71dc-4852-bb5c-2b38b21c8e0f',
         }
 
         self.id = Crypto_report.params = {'start':'1','limit':'200','convert':'USD','sort':'market_cap'}

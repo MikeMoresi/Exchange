@@ -25,6 +25,8 @@ def placeOrders(request):
             order = form.save(commit=False)
             order.profile = Profile.objects.filter(user=request.user)[0]
             order.checkOrders()
+            if order.done == 'NOT_VALID':
+                return redirect('/error')
             order.save()
             return redirect('/openOrders', pk=order.pk)
     else:
@@ -68,7 +70,5 @@ def profitLoss(request):
         )
     return JsonResponse(response,safe=False)
 
-
-
-
-
+def error(request):
+    return render(request, 'app/error.html', {})

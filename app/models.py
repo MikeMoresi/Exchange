@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from djongo.models.fields import ObjectIdField
-from django.db.models import Q
 from django.http import JsonResponse
 import random
 #import btc value from CoinMarketCap
@@ -20,7 +19,6 @@ class Profile(models.Model):
     wallet = models.FloatField(default=btcValue()*n)
     profitLoss = models.FloatField(default=0)
 
-
 buy_sell_choise= [('buy','Buy'),('sell','Sell')]
 
 
@@ -34,13 +32,11 @@ class Order(models.Model):
 
     def checkOrders(self):
 
-
-
         userActionOrder = self.action
-        if userActionOrder == 'Buy':
+        if userActionOrder == 'buy' and self.quantity*self.price<=self.profile.wallet:
             # BUY ORDER
-            #check if there are or no LTE Sell Orders from other accounts
-            sellOrders = Order.objects.filter((~Q(profile_id=self.profile)),done='False',action='sell',price__lte = self.price).order_by('price')
+            #check if there are or no LTE Sell Orders
+            sellOrders = Order.objects.filter(done='False',action='sell',price__lte = self.price).order_by('price')
             if not sellOrders:
                 return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
             else:
@@ -65,15 +61,17 @@ class Order(models.Model):
                 self.profile.wallet = self.profile.nBTC*btcValue()
                 self.profile.save(update_fields=['wallet'])
                 #profitLoss
-                cheapSellOrder.profile.profitLoss += cheapSellOrder.price
+                cheapSellOrder.profile.profitLoss = cheapSellOrder.profile.profitLoss + (self.price - cheapSellOrder.price)
                 cheapSellOrder.profile.save(update_fields=['profitLoss'])
-                self.profile.profitLoss -= self.price
-                self.profile.save(update_fields=['profitLoss'])
 
         else:
-            # SELL ORDER
-            # check if there are or no GTE Buy Orders from other accounts
-            buyOrders = Order.objects.filter((~Q(profile_id=self.profile)), done='False', action='buy',price__gte=self.price).order_by('-price')
+            self.done = 'NOT_VALID'
+
+
+        if userActionOrder == 'sell' and self.profile.nBTC>=self.quantity:
+            # BUY ORDER
+            # check if there are or no GTE Buy Orders
+            buyOrders = Order.objects.filter(done='False', action='buy',price__gte=self.price).order_by('-price')
             if not buyOrders:
                 return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
             else:
@@ -98,10 +96,11 @@ class Order(models.Model):
                 self.profile.wallet = self.profile.nBTC * btcValue()
                 self.profile.save(update_fields=['wallet'])
                 # profitLoss
-                suitBuyOrder.profile.profitLoss -= suitBuyOrder.price
-                suitBuyOrder.profile.save(update_fields=['profitLoss'])
-                self.profile.profitLoss += self.price
+                self.profile.profitLoss = self.profile.profitLoss + (suitBuyOrder.price - self.price)
                 self.profile.save(update_fields=['profitLoss'])
+        else:
+            self.done = 'NOT_VALID'
+
 
 
 

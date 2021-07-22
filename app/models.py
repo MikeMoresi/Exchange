@@ -42,7 +42,6 @@ class Order(models.Model):
             else:
                 #find the cheapest sell open order
                 cheapSellOrder = sellOrders[0]
-                print(cheapSellOrder)
 
                 #change order status from False to True
                 cheapSellOrder.done = 'True'
@@ -73,11 +72,10 @@ class Order(models.Model):
             # check if there are or no GTE Buy Orders
             buyOrders = Order.objects.filter(done='False', action='buy',price__gte=self.price).order_by('-price')
             if not buyOrders:
-                return JsonResponse('at this moment there aren t sell orders to satisfy your request, we saved your order on our trading book.',safe=False)
+                return JsonResponse('at this moment there aren t buy orders to satisfy your request, we saved your order on our trading book.',safe=False)
             else:
                 # find the suitable buy open order
                 suitBuyOrder = buyOrders[0]
-                print(suitBuyOrder)
 
                 # change order status from False to True
                 suitBuyOrder.done = 'True'
